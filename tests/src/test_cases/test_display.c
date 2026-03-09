@@ -270,6 +270,11 @@ static void refr_event_handler(lv_event_t * e)
     lv_display_delete(lv_event_get_current_target(e));
 }
 
+static void test_display_event_cb(lv_event_t * e)
+{
+    LV_UNUSED(e);
+}
+
 static void never_called(lv_display_t * disp, const lv_area_t * area, uint8_t * color_p)
 {
     LV_UNUSED(disp);
@@ -291,6 +296,23 @@ void test_display_deleted_during_event(void)
     lv_refr_now(disp);
     TEST_ASSERT_EQUAL(called, 1);
     lv_draw_buf_destroy(buf1);
+}
+
+void test_display_add_event_cb_returns_dsc(void)
+{
+    static uint32_t user_data;
+
+    lv_display_t * disp = lv_display_create(480, 320);
+    uint32_t event_count = lv_display_get_event_count(disp);
+    lv_event_dsc_t * dsc = lv_display_add_event_cb(disp, test_display_event_cb, LV_EVENT_REFR_READY, &user_data);
+
+    TEST_ASSERT_NOT_NULL(dsc);
+    TEST_ASSERT_EQUAL_UINT32(event_count + 1, lv_display_get_event_count(disp));
+    TEST_ASSERT_EQUAL_PTR(dsc, lv_display_get_event_dsc(disp, event_count));
+    TEST_ASSERT_EQUAL_PTR(test_display_event_cb, lv_event_dsc_get_cb(dsc));
+    TEST_ASSERT_EQUAL_PTR(&user_data, lv_event_dsc_get_user_data(dsc));
+
+    lv_display_delete(disp);
 }
 
 static void test_display_resolution_full_rotation(
