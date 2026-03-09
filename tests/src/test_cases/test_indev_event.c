@@ -58,6 +58,11 @@ static void keypad_event_cb(lv_event_t * e)
     }
 }
 
+static void test_indev_event_cb(lv_event_t * e)
+{
+    LV_UNUSED(e);
+}
+
 void test_indev_keypad_no_group_key_event(void)
 {
     lv_indev_t * indev = lv_test_indev_get_indev(LV_INDEV_TYPE_KEYPAD);
@@ -137,6 +142,24 @@ void test_indev_keypad_no_group_long_press(void)
 
     /* Cleanup */
     lv_indev_remove_event_cb_with_user_data(indev, keypad_event_cb, NULL);
+}
+
+void test_indev_add_event_cb_returns_dsc(void)
+{
+    static uint32_t user_data;
+
+    lv_indev_t * indev = lv_test_indev_get_indev(LV_INDEV_TYPE_KEYPAD);
+    uint32_t event_count = lv_indev_get_event_count(indev);
+    lv_event_dsc_t * dsc = lv_indev_add_event_cb(indev, test_indev_event_cb, LV_EVENT_KEY, &user_data);
+
+    TEST_ASSERT_NOT_NULL(indev);
+    TEST_ASSERT_NOT_NULL(dsc);
+    TEST_ASSERT_EQUAL_UINT32(event_count + 1, lv_indev_get_event_count(indev));
+    TEST_ASSERT_EQUAL_PTR(dsc, lv_indev_get_event_dsc(indev, event_count));
+    TEST_ASSERT_EQUAL_PTR(test_indev_event_cb, lv_event_dsc_get_cb(dsc));
+    TEST_ASSERT_EQUAL_PTR(&user_data, lv_event_dsc_get_user_data(dsc));
+
+    lv_indev_remove_event_cb_with_user_data(indev, test_indev_event_cb, &user_data);
 }
 
 #endif
